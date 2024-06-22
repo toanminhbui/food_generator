@@ -105,8 +105,8 @@ export default function Home() {
     const baseUrl = "https://api.edamam.com/api/recipes/v2";
     const params = new URLSearchParams({
       type: "public",
-      app_id: process.env.NEXT_PUBLIC_APP_ID,
-      app_key: process.env.NEXT_PUBLIC_APP_KEY,
+      app_id: process.env.NEXT_PUBLIC_APP_ID || "",
+      app_key: process.env.NEXT_PUBLIC_APP_KEY || "",
       mealType: meal,
       random: "true",
     });
