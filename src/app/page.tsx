@@ -1,6 +1,8 @@
 "use client";
+import { dotWave } from 'ldrs';
 import * as React from "react";
 import Link from 'next/link';
+import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -44,9 +46,10 @@ interface ApiResponse {
 }
 
 export default function Home() {
-  const [meal, setMeal] = React.useState<string>("Meal-Time");
+  dotWave.register();
+  const [meal, setMeal] = React.useState<string>("Breakfast");
   const [recipes, setRecipes] = React.useState<Recipe[]>([]);
-
+  const [loading, setLoading] = React.useState<boolean>(false);
   const items = [
     {
       id: "dairy-free",
@@ -92,6 +95,7 @@ export default function Home() {
   const FormSchema = z.object({
     items: z.array(z.string()),
     diets: z.array(z.string()),
+    cook_time: z.string(),
   });
 
   const form = useForm<z.infer<typeof FormSchema>>({
@@ -99,15 +103,18 @@ export default function Home() {
     defaultValues: {
       items: [],
       diets: [],
+      cook_time: "1000",
     },
   });
-  function buildURL(meal: string, healthItems: string[], dietItems: string[]): string {
+
+  function buildURL(meal: string, healthItems: string[], dietItems: string[], cook_time:string): string {
     const baseUrl = "https://api.edamam.com/api/recipes/v2";
     const params = new URLSearchParams({
       type: "public",
       app_id: process.env.NEXT_PUBLIC_APP_ID || "",
       app_key: process.env.NEXT_PUBLIC_APP_KEY || "",
       mealType: meal,
+      time: cook_time,
       random: "true",
     });
 
@@ -123,8 +130,8 @@ export default function Home() {
   }
 
   async function onSubmit(data: z.infer<typeof FormSchema>) {
-    const url = buildURL(meal, data.items, data.diets);
-
+    const url = buildURL(meal, data.items, data.diets, data.cook_time);
+    setLoading(true);
     try {
       const response = await fetch(url);
       const result: ApiResponse = await response.json();
@@ -144,6 +151,7 @@ export default function Home() {
         description: "Failed to fetch recipes. Please try again later.",
       });
     }
+    setLoading(false);
   }
 
   return (
@@ -255,29 +263,51 @@ export default function Home() {
                 </FormItem>
               )}
             />
+            <FormField
+              control={form.control}
+              name="cook_time"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Max Cook Time</FormLabel>
+                  <FormControl>
+                    <Input placeholder="in minutes, ex: 30" {...field} />
+                  </FormControl>
+                  <FormDescription>
+                    leave blank for no preference
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             <Button type="submit">Surprise Me</Button>
           </form>
         </Form>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 w-full mt-8">
-        {recipes.map((recipe, index) => (
-          <div key={index} className="border p-4 rounded-md shadow-sm">
-            <h2 className="text-xl font-bold">{recipe.label}</h2>
-            <img src={recipe.image} alt={recipe.label} className="w-full h-auto mb-4"/>
-            <p className="text-sm"><strong>Calories:</strong> {recipe.calories.toPrecision(5)}</p>
-            <p className="text-sm"><strong>Ingredients:</strong></p>
-            <ul className="list-disc list-inside text-sm">
-              {recipe.ingredientLines.map((ingredient, idx) => (
-                <li key={idx}>{ingredient}</li>
-              ))}
-            </ul>
-            <Button asChild>
-            <Link href={recipe.url}>Go to Recipe</Link>
-            </Button>
-          </div>
-        ))}
-      </div>
+      {loading ? (
+        <div className="flex justify-center items-center h-64">
+          <l-dot-wave size="47" speed="1" color="black"></l-dot-wave>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 w-full mt-8">
+          {recipes.map((recipe, index) => (
+            <div key={index} className="border p-4 rounded-md shadow-sm">
+              <h2 className="text-xl font-bold">{recipe.label}</h2>
+              <img src={recipe.image} alt={recipe.label} className="w-full h-auto mb-4"/>
+              <p className="text-sm"><strong>Calories:</strong> {recipe.calories.toPrecision(5)}</p>
+              <p className="text-sm"><strong>Ingredients:</strong></p>
+              <ul className="list-disc list-inside text-sm">
+                {recipe.ingredientLines.map((ingredient, idx) => (
+                  <li key={idx}>{ingredient}</li>
+                ))}
+              </ul>
+              <Button asChild>
+                <Link href={recipe.url}>Go to Recipe</Link>
+              </Button>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
