@@ -1,5 +1,5 @@
 "use client";
-import { dotWave } from 'ldrs';
+
 import * as React from "react";
 import Link from 'next/link';
 import { Input } from "@/components/ui/input";
@@ -46,7 +46,11 @@ interface ApiResponse {
 }
 
 export default function Home() {
-  dotWave.register();
+  React.useEffect(() => {
+    import('ldrs').then(mod => {
+      mod.dotWave.register();
+    });
+  }, []);
   const [meal, setMeal] = React.useState<string>("Breakfast");
   const [recipes, setRecipes] = React.useState<Recipe[]>([]);
   const [loading, setLoading] = React.useState<boolean>(false);
