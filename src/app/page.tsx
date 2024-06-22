@@ -107,12 +107,15 @@ export default function Home() {
     defaultValues: {
       items: [],
       diets: [],
-      cook_time: "1000",
+      cook_time: "",
     },
   });
 
   function buildURL(meal: string, healthItems: string[], dietItems: string[], cook_time:string): string {
     const baseUrl = "https://api.edamam.com/api/recipes/v2";
+    if (cook_time == ""){
+      cook_time = "1000";
+    }
     const params = new URLSearchParams({
       type: "public",
       app_id: process.env.NEXT_PUBLIC_APP_ID || "",
